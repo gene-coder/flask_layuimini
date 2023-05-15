@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>菜单管理</title>
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <link rel="stylesheet" href="/static/lib/layui-v2.6.3/css/layui.css" media="all">
+    <link rel="stylesheet" href="/static/css/public.css" media="all">
+    <link rel="stylesheet" href="/static/lib/font-awesome-4.7.0/css/font-awesome.min.css" media="all">
+</head>
+
+<body>
+    <div class="layuimini-container">
+        <div class="layuimini-main">
+
+            <fieldset class="table-search-fieldset">
+                <legend>搜索信息</legend>
+                <div style="margin: 10px 10px 10px 10px">
+                    <form class="layui-form layui-form-pane" action="">
+                        <div class="layui-form-item">
+                            <div class="layui-inline">
+                                <label class="layui-form-label">菜单名称</label>
+                                <div class="layui-input-inline">
+                                    <input type="text" name="menu_name" autocomplete="off" class="layui-input">
+                                </div>
+                            </div>
+                            <div class="layui-inline">
+                                <label class="layui-form-label">父菜单</label>
+                                <div class="layui-input-inline">
+                                    <input type="text" name="par_menu" autocomplete="off" class="layui-input">
+                                </div>
+                            </div>
+                            <div class="layui-inline">
+                                <button type="submit" class="layui-btn layui-btn-primary" lay-submit
+                                    lay-filter="data-search-btn"><i class="layui-icon"></i> 搜 索</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </fieldset>
+
+            <script type="text/html" id="toolbarDemo">
+                <div class="layui-btn-container">
+                    <button class="layui-btn layui-btn-normal layui-btn-sm data-add-btn" lay-event="add"> 添加 </button>
+                    <!-- <button class="layui-btn layui-btn-sm layui-btn-danger data-delete-btn" lay-event="delete"> 删除 </button> -->
+                </div>
+            </script>
+
+            <table class="layui-hide" id="currentTableId" lay-filter="currentTableFilter"></table>
+
+            <script type="text/html" id="currentTableBar">
+            <a class="layui-btn layui-btn-normal layui-btn-xs data-count-edit" lay-event="edit">编辑</a>
+            <a class="layui-btn layui-btn-xs layui-btn-danger data-count-delete" lay-event="delete">删除</a>
+            </script>
+            {% raw %}
+            <script type="text/html" id="icon">
+                <i class="fa fa-address-book"></i>
+            </script>
+
+            <script type="text/html" id="visible">
+                {{#  if(d.visible == 0){ }}
+                    <a>可见</a>
+                {{#  } else { }}
+                    <a>不可见</a>
+                {{#  } }}
+            </script>
+            {% endraw %}
+        </div>
+    </div>
+</body>
+<script src="/static/lib/layui-v2.6.3/layui.js" charset="utf-8"></script>
+<script src="/static/js/common.js" charset="utf-8"></script>
+<script>
+
+    layui.use(['form', 'table', 'laytpl'], function () {
+        var $ = layui.jquery,
+            form = layui.form,
+            table = layui.table;
+
+        table.render({
+            elem: '#currentTableId',
+            url: '/system/permission/menu_list',
+            toolbar: '#toolbarDemo',
+            defaultToolbar: ['filter', 'exports', 'print', {
+                title: '提示',
+                layEvent: 'LAYTABLE_TIPS',
+                icon: 'layui-icon-tips'
+            }],
+            cols: [[
+                { type: 'numbers', width: 80, title: '序号', sort: 'true', fixed: 'left' },
+                { field: 'id', width: 100, title: '菜单', sort: true },
+                { field: 'menu_name', width: 120, title: '菜单名称' },
+                { field: 'par_menu', width: 120, title: '父菜单', sort: true },
+                { field: 'order_num', width: 100, title: '菜单排序' },
+                { field: 'herf', title: '连接', minWidth: 120, align: "center" },
+                { field: 'menu_type', width: 80, title: '类型', sort: true, hide: true },
+                { field: 'visible', width: 100, title: '是否可见', templet: '#visible', align: "center", hide: true },
+                { field: 'icon', width: 100, title: '菜单标记', templet: '#icon', align: "center" },
+                { field: 'remark', width: 80, title: '备注', sort: true },
+                { field: 'parent_id', width: 80, title: '父菜单id', sort: true, hide: true },
+                { title: '操作', minWidth: 80, toolbar: '#currentTableBar', align: "center", fixed: 'right'  }
+            ]],
+            limits: [10, 15, 20, 25, 50, 100],
+            limit: 15,
+            page: true,
+            skin: 'line'
+        });
+
+        // 监听搜索操作
+        form.on('submit(data-search-btn)', function (data) {
+            var result = JSON.stringify(data.field);
+            // layer.alert(result, {
+            //     title: '最终的搜索信息'
+            // });
+
+            //执行搜索重载
+            table.reload('currentTableId', {
+                page: {
+                    curr: 1
+                }
+                , where: {
+                    searchParams: result
+                }
+            }, 'data');
+
+            return false;
+        });
+
+        // 下拉框内容刷新
+        $.get("/system/permission/allmenu", function (data, status) {
+            for (var i = 0; i < data.length; i++) {
+                option = '<option value= "' + data[i].id + '" >' + data[i].id + '_' + data[i].menu_name + '</option>'
+                $("#par_menu").append(option);
+                form.render('select');
+            }
+
+        });
+        /**
+         * toolbar监听事件
+         */
+        table.on('toolbar(currentTableFilter)', function (obj) {
+            // 点击新增时，清空原有内容
+            $("#menu_id").val(generateUUID(8));
+            $("#url").val('');
+            $("#menu_name").val('');
+            $("#order_num").val('');
+            $("#datadesc").val('');
+            $("select[name='par_menu']").val('');
+            form.render('select');
+
+            if (obj.event === 'add') {  // 监听添加操作
+                var index = layer.open({
+                    title: '添加菜单',
+                    type: 1,
+                    shade: 0.2,
+                    maxmin: true,
+                    shadeClose: true,
+                    area: ['60%', '70%'],
+                    content: $('#addmenu'),
+                    yes: function (index, layero) {
+                        layer.closeAll();
+                    },
+                });
+                $('#submit').text('立即添加')
+            } else if (obj.event === 'delete') {  // 监听删除操作
+                var checkStatus = table.checkStatus('currentTableId')
+                    , data = checkStatus.data;
+                layer.alert(JSON.stringify(data));
+            }
+        });
+        // 添加菜单,提交操作
+        form.on('submit(submit)', function (data) {
+            data = data.field;
+            // 获取所有父id，判断是id是否重复。如果是添加，重复则提示不提交，如果是修改，则直接修改。
+            var select = $('#par_menu option')
+            var vals = [];
+            for (i = 0; i < select.length; i++) {
+                vals.push(select[i].value);
+            }
+            if ($.inArray(data.menu_id, vals) !== -1 && $('#submit').text() == '立即添加') {
+                layer.alert('菜单id已经存在，必须重新填写')
+                $('#menu_id').val('')
+                return false;
+            }
+            $.post("/system/permission/add_menu",
+                {
+                    menu_id: data.menu_id,
+                    url: data.url,
+                    menu_name: data.menu_name,
+                    par_menu: data.par_menu,
+                    url: data.url,
+                    icon: data.icon,
+                    order_num: data.order_num,
+                    datadesc: data.datadesc
+                },
+                function (rdata, status) {
+                    layer.alert(JSON.parse(rdata).msg, function (index) {
+                        window.location.reload();
+                    });
+                });
+            return false;
+        });
+        //监听表格复选框选择
+        table.on('checkbox(currentTableFilter)', function (obj) {
+            console.log(obj)
+        });
+
+        table.on('tool(currentTableFilter)', function (obj) {
+            var data = obj.data;
+            if (obj.event === 'edit') {
+                // 获取最新的副菜单
+                $('#submit').text('立即修改')
+                $("#menu_id").val(data.id);
+                $("#url").val(data.herf);
+                $("#menu_name").val(data.menu_name);
+                $("#icon").val(data.icon);
+                $("#order_num").val(data.order_num);
+                $("#datadesc").val(data.remark);
+                $("select[name='par_menu']").val(data.parent_id);
+                form.render('select');
+                var index = layer.open({
+                    title: '编辑用户',
+                    type: 1,
+                    shade: 0.2,
+                    maxmin: true,
+                    shadeClose: true,
+                    area: ['60%', '70%'],
+                    content: $('#addmenu'),
+                });
+                $(window).on("resize", function () {
+                    layer.full(index);
+                });
+                return false;
+            } else if (obj.event === 'delete') {
+                layer.confirm('真的删除行么', function (index) {
+                    console.log(data)
+                    $.post("/system/permission/delete_menu",
+                        {
+                            menu_id: data.id
+                        },
+                        function (rdata, status) {
+                            layer.alert(JSON.parse(rdata).msg, function (index) {
+                                obj.del();
+                                layer.close(index);
+                            });
+                        });
+                    layer.close(index);
+                });
+            }
+        });
+
+    });
+</script>
+
+
+
+</html>
+
+<form class="layui-form" id="addmenu" style="display: none;">
+    <div class="layui-form-item">
+        <div class="layui-inline">
+            <label class="layui-form-label">菜单id</label>
+            <div class="layui-input-block">
+                <input type="text" id="menu_id" name="menu_id" required lay-verify="required" autocomplete="on"
+                    class="layui-input" style="width:200px">
+            </div>
+        </div>
+        <div class="layui-inline">
+            <label class="layui-form-label">链接</label>
+            <div class="layui-input-block">
+                <input type="text" id="url" name="url"  autocomplete="on"
+                    class="layui-input" style="width:200px">
+            </div>
+        </div>
+
+        <div class="layui-form-item">
+            <div class="layui-inline">
+                <label class="layui-form-label">菜单名称</label>
+                <div class="layui-input-inline">
+                    <input type="text" id="menu_name" name="menu_name" required lay-verify="required" autocomplete="on"
+                        class="layui-input" style="width:200px">
+                </div>
+            </div>
+            <div class="layui-inline">
+
+                <label class="layui-form-label">父菜单</label>
+                <div class="layui-input-inline">
+                    <select id="par_menu" name="par_menu" required lay-verify="required">
+                        <option value="0" selected="">0_顶级菜单</option>
+
+                    </select>
+                </div>
+            </div>
+        </div>
+
+    </div>
+    <div class="layui-form-item">
+        <div class="layui-inline">
+            <label class="layui-form-label">图标</label>
+            <div class="layui-input-inline">
+                <input type="text" id="icon" name="icon" required lay-verify="required" autocomplete="on"
+                    class="layui-input" style="width:200px" value="fa fa-address-book">
+            </div>
+        </div>
+        <div class="layui-inline">
+            <label id="lable_database" class="layui-form-label">排序</label>
+            <div class="layui-input-inline">
+                <input type="text" id="order_num" name="order_num" required lay-verify="number" autocomplete="on"
+                    class="layui-input" style="width:200px">
+            </div>
+        </div>
+    </div>
+    <div class="layui-form-item layui-form-text">
+        <label class="layui-form-label">备注</label>
+        <div class="layui-input-block">
+            <textarea lay-verify="required" id="datadesc" name="datadesc" class="layui-textarea"
+                style="width:600px"></textarea>
+        </div>
+    </div>
+    <div class="layui-form-item">
+        <div class="layui-input-block">
+            <button class="layui-btn" id="submit" lay-submit lay-filter="submit">立即提交</button>
+            <button type="reset" class="layui-btn layui-btn-primary">重置</button>
+        </div>
+    </div>
+</form>
