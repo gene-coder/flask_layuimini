@@ -11,4 +11,4 @@
 # 注意
 1. 程序中，所有密码均未加密，正式环境需要注意信息安全。
 2. 数据库配置文件在app/conf/main.ini中。
-3. 系统admin默认密码为comeon。
+3. 系统admin默认密码为comeon
