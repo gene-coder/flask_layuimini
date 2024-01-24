@@ -4,7 +4,7 @@
 # 环境说明
 使用了python 3.9.12，mariadb 10.10.3-MariaDB。
 # 使用说明
-1. 安装python mysql，
+1. 安装python mariadb(mysql)，
 2. 使用pip安装python依赖包
 3. 将appuser.sql导入数据库中。
 4. 执行python app.py启动。
