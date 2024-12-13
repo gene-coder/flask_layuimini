@@ -4,6 +4,7 @@
 import json
 from flask import session, redirect, render_template, request
 import uuid
+from app.main.common.cryption import bcrypt_encrypt,bcrypt_verify
 from app import db
 from sqlalchemy.orm import aliased
 from sqlalchemy.sql import func
@@ -50,7 +51,7 @@ def login():
                 person = USER.query.filter(
                     USER.status == 0, USER.username == user_name).first()
                 if person:
-                    if person.password == user_pwd:
+                    if bcrypt_verify(user_pwd,person.password):
                         session['username'] = user_name
                         session['user_id'] = person.id
                         rdata['status'] = True
@@ -90,16 +91,16 @@ def nav():
 
 
 @system.route("/user/chpasswd", methods=["GET", "POST"])
-@user_login
+@user_only_login
 def chpasswd():
     if request.method == 'POST':
         oldpassword = request.form.get('oldpassword')
         newpassword = request.form.get('newpassword')
         user_info = get_curr_person_info()
-        if oldpassword == user_info['password']:
+        if bcrypt_verify(oldpassword,user_info['password']):
             user_id = session['user_id']
             user_data = USER.query.filter(USER.id == user_id).first()
-            user_data.password = newpassword
+            user_data.password = bcrypt_encrypt(newpassword)
             db.session.commit()
             return json.dumps({'status': True, 'msg': '修改成功'}, ensure_ascii=False)
         else:
@@ -209,8 +210,8 @@ def role_list():
         join(ROLE_MENU, ROLE.id == ROLE_MENU.role_id, isouter=True).\
         join(MENU, MENU.id == ROLE_MENU.menu_id, isouter=True).\
         filter(ROLE.status == 0).\
-        group_by(ROLE.id).\
-        order_by(MENU.parent_id, MENU.order_num)
+        group_by(ROLE.id,ROLE.role_name, ROLE.remark).\
+        order_by(ROLE.id)
     url_req = request.args
     table_title = ['id', 'role_name', 'remark', 'ids', 'menus']
     rdata = get_date_search(sql.all(), table_title, url_req)
@@ -332,7 +333,7 @@ def add_user():
         status = data.get('status')
         username = data.get('username')
         user_note = data.get('user_note')
-        password = 'Abc@12345'
+        password = bcrypt_encrypt(data.get('password'))
         datadesc = data.get('datadesc')
         status = 0 if status == 'on' else '1'
         role_all = []
@@ -406,7 +407,7 @@ def resetpasswd():
     if request.method == 'POST':
         user_id = request.form.get('user_id')
         user_data = USER.query.filter(USER.id == user_id).first()
-        user_data.password = 'Abc@12345'
+        user_data.password = bcrypt_encrypt('Abc@12345')
         db.session.commit()
         return json.dumps({'status': True, 'msg': '密码修改为：Abc@12345'}, ensure_ascii=False)
     else:
