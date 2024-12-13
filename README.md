@@ -9,6 +9,6 @@
 3. 将appuser.sql导入数据库中。
 4. 执行python app.py启动。
 # 注意
-1. 程序中，密码采用hash加密，其余数据可采用ase加密。
+1. 程序中，密码采用hash加密，其余数据采用ase加密。
 2. 数据库配置文件在app/conf/main.ini中。
 3. 系统admin默认密码为comeon。
