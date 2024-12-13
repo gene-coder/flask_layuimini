@@ -32,8 +32,6 @@ def aes_encrypt(data,secret_key = user_key):
  
 # 1.2、解密数据
 def aes_decrypt(data,secret_key = user_key):
-    """解密数据
-    """
     data = base64.b64decode(data)
     cipher = AES.new(key=secret_key.encode("utf-8"), mode=AES.MODE_ECB)
     decrypt_data = cipher.decrypt(data)

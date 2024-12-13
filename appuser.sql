@@ -17,9 +17,9 @@
 SET NAMES utf8mb4;
 SET FOREIGN_KEY_CHECKS = 0;
 
--- ----------------------------
+-- ---------------------------
 -- Table structure for t_log
--- ----------------------------
+-- ---------------------------
 DROP TABLE IF EXISTS `t_log`;
 CREATE TABLE `t_log`  (
   `id` int(0) NOT NULL AUTO_INCREMENT COMMENT '操作id',

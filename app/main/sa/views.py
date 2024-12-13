@@ -81,7 +81,7 @@ def logout():
     return redirect('/')
 
 
-# 用户菜单导航返回。
+# 用户菜单导航返回
 @system.route("/user/nav", methods=["GET", "POST"])
 @user_only_login
 def nav():
